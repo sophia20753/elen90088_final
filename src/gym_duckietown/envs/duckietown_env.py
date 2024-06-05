@@ -5,6 +5,7 @@ from gym import spaces
 from ..simulator import Simulator
 from .. import logger
 
+import random
 
 class DuckietownEnv(Simulator):
     """
@@ -95,8 +96,8 @@ class DuckietownNav(DuckietownEnv):
         self.goal_tile = None
         DuckietownEnv.__init__(self, **kwargs)
 
-    def reset(self, segment=False):
-        DuckietownNav.reset(self)
+    def reset(self, goal_tile=(0,0), segment=False):
+        DuckietownEnv.reset(self)
 
         # Find the tile the agent starts on
         start_tile_pos = self.get_grid_coords(self.cur_pos)
@@ -105,13 +106,13 @@ class DuckietownNav(DuckietownEnv):
         # Select a random goal tile to navigate to
         assert len(self.drivable_tiles) > 1
         while True:
-            tile_idx = self.np_random.randint(0, len(self.drivable_tiles))
-            self.goal_tile = self.drivable_tiles[tile_idx]
+            tile_idx = goal_tile
+            self.goal_tile = self._get_tile(*tile_idx)
             if self.goal_tile is not start_tile:
                 break
 
     def step(self, action):
-        obs, reward, done, info = DuckietownNav.step(self, action)
+        obs, reward, done, info = DuckietownEnv.step(self, action)
 
         info["goal_tile"] = self.goal_tile
 
@@ -122,6 +123,56 @@ class DuckietownNav(DuckietownEnv):
 
         if cur_tile is self.goal_tile:
             done = True
-            reward = 1000
+            #reward = 1000
+
+        return obs, reward, done, info
+
+class DuckietownSim(DuckietownEnv):
+    """
+    Environment for the Duckietown navigation task (NAV)
+    """
+
+    def __init__(self, **kwargs):
+        self.goal_tile = None
+        DuckietownEnv.__init__(self, **kwargs)
+
+    def reset(self, segment=False):
+        DuckietownEnv.reset(self)
+
+        # Find the tile the agent starts on
+        start_tile_pos = self.get_grid_coords(self.cur_pos)
+        self.start_tile = self._get_tile(*start_tile_pos)
+
+        # Select a random goal tile to navigate to
+        assert len(self.drivable_tiles) > 1
+        while True:
+            #tile_idx = self.np_random.randint(0, len(self.drivable_tiles))
+            '''
+            # restrict goal tile based on start tile to minimise detours taken
+            x_range = range(start_tile_pos[0]-1, start_tile_pos[0]+2)
+            z_range = range(start_tile_pos[1]-1, start_tile_pos[1]+2)
+            goal_x = max(1, min(random.choice(x_range), 6))
+            goal_z = max(1, min(random.choice(z_range), 6))
+            tile_idx = (goal_x, goal_z)
+            self.goal_tile = self._get_tile(*tile_idx)
+            # find centroid of goal tile
+            #if (self.goal_tile is not self.start_tile) and (self.goal_tile in self.drivable_tiles):
+            if self.goal_tile is not self.start_tile:
+                break
+            '''
+
+    def step(self, action):
+        obs, reward, done, info = DuckietownEnv.step(self, action)
+
+        info["goal_tile"] = self.goal_tile
+
+        # TODO: add term to reward based on distance to goal?
+
+        cur_tile_coords = self.get_grid_coords(self.cur_pos)
+        cur_tile = self._get_tile(*cur_tile_coords)
+
+        if cur_tile is self.goal_tile:
+            done = True
+            #reward = 1000
 
         return obs, reward, done, info

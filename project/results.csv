@@ -1,0 +1,13 @@
+﻿,PD - Raw,,,,,PD - Processed,,
+,DNN,,,,,DNN,,
+,Base Model,Regularised Model,Best Model,,,Base Model,Regularised Model,Best Model
+Training HL,8.39E-05,4.48E-03,3.03E-03,,,3.55E-06,1.71E-03,1.67E-04
+Validation HL,4.84E-06,3.72E-03,1.07E-03,,,3.45E-07,1.72E-03,1.12E-04
+Testing HL,,,,,,,,
+PD Coordinates HL,,,,,,,,
+Ground Truth Coordinates HL,,,,,,,,
+,SVR,,,,,SVR,,
+,Unweighted,Weighted,,,,Unweighted,Weighted,
+Validation MSE,1.05E-07,3.96E-08,,,,1.84E-07,1.73E-07,
+Validation MAE,2.96E-04,1.52E-04,,,,2.94E-04,3.21E-04,
+Validation R2,1.00E+00,1.00E+00,,,,1.00E+00,1.00E+00,

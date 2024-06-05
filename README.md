@@ -3,7 +3,7 @@
 [![Build Status](https://circleci.com/gh/duckietown/gym-duckietown/tree/master.svg?style=shield)](https://circleci.com/gh/duckietown/gym-duckietown/tree/master) [![Docker Hub](https://img.shields.io/docker/pulls/duckietown/gym-duckietown.svg)](https://hub.docker.com/r/duckietown/gym-duckietown)
 
 
-[Duckietown](http://duckietown.com/) self-driving car simulator environments for OpenAI Gym.
+[Duckietown](http://duckietown.org/) self-driving car simulator environments for OpenAI Gym.
 
 Please use this bibtex if you want to cite this repository in your publications:
 
@@ -59,18 +59,12 @@ different scenarios will make for a more robust policy/model.
 <img src="media/domainrand-sim.gif" width="300px" height="200px" ><img src="media/needfordr.gif" width="300px" height="200px" ><br>
 </p>
 
-The recommended way to test your model on the real hardware is to use [one of the AI Driving Olympics templates](https://docs-old.duckietown.org/daffy/AIDO/out/embodied.html). 
-We have some baseline RL implementations that also may be useful for this purpose, 
-[one that is standalone](https://docs-old.duckietown.org/daffy/AIDO/out/embodied_rl.html), and 
-[one that is based on Residual Policy Learning and integrates with ROS](https://docs-old.duckietown.org/daffy/AIDO/out/embodied_rpl.html). 
-
-<!--The `Duckiebot-v0` environment is meant to connect to software running on
+The `Duckiebot-v0` environment is meant to connect to software running on
 a real Duckiebot and remotely control the robot. It is a tool to test that policies
 trained in simulation can transfer to the real robot. If you want to
 control your robot remotely with the `Duckiebot-v0` environment, you will need to
 install the software found in the [duck-remote-iface](https://github.com/maximecb/duck-remote-iface)
 repository on your Duckiebot.
--->
 
 <p align="center">
 <img src="media/duckiebot_1.png" width="300px"><br>
