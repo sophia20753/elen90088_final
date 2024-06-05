@@ -1,3 +1,13 @@
+import sys
+import os
+
+# get the current directory of the script
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
+# add the 'src' directory to the Python path
+src_dir = os.path.join(script_dir, '..', 'src')
+sys.path.append(src_dir)
+
 # import relevant libraries
 import pickle
 from pickle import FALSE, TRUE
@@ -12,12 +22,14 @@ from gym_duckietown.envs import DuckietownEnv
 import csv
 import random
 import argparse
-import os
 import tensorflow as tf
 from tensorflow.keras.models import load_model
 from project_functions import save_data_to_csv
 
-def process_input(env, mean, scale):
+def get_first_word(filename):
+    return filename.split('_')[0]
+
+def process_input(env, reward, mean, scale, model_name):
     lane_position = env.get_lane_pos2(env.cur_pos, env.cur_angle)
     distance_to_road_center = lane_position.dist
     angle_from_straight_in_rads = lane_position.angle_rad
@@ -26,7 +38,12 @@ def process_input(env, mean, scale):
     distance_to_road_center = (distance_to_road_center-mean[1])/scale[1]
     angle_from_straight_in_rads = (angle_from_straight_in_rads-mean[2])/scale[2]
 
-    input_data = np.array([[distance_to_road_center, angle_from_straight_in_rads]])
+    if get_first_word(model_name) == 'unweighted':
+        # input data for unweighted svr
+        input_data = np.array([[distance_to_road_center, angle_from_straight_in_rads, reward]])
+    else:
+        # input data for dnn & weighted svr
+        input_data = np.array([[distance_to_road_center, angle_from_straight_in_rads]])
 
     return input_data
 
@@ -36,8 +53,12 @@ def main(model_name, file_ext = '.h5', map_name='udem1', data_type='pd'):
     env.render()
     env.max_steps = 5000 # increase max step count to ensure robot finishes traversing map
 
-    # load model
-    model = load_model(f"models/{model_name}{file_ext}")
+    # load model for .h5
+    if file_ext == '.h5':
+        model = load_model(f"models/{model_name}.h5")
+    else:
+        with open(f'models/{model_name}.pkl', 'rb') as f:
+            model = pickle.load(f)
 
     # load scaling parameters
     with open(f'train_data/{data_type}_scaling_params.pkl', 'rb') as file:
@@ -75,7 +96,7 @@ def main(model_name, file_ext = '.h5', map_name='udem1', data_type='pd'):
         # update total reward
         total_reward += reward
 
-        input_data = process_input(env, mean, scale)
+        input_data = process_input(env, reward, mean, scale, model_name)
 
         # make prediction
         steering_angle = model.predict(input_data)
@@ -127,4 +148,4 @@ if __name__  == '__main__':
     parser.add_argument('--data_type', type=str, help='PD/MPC data for scaling parameters')
     args = parser.parse_args()
 
-    main(args.model_name, args.map_name, args.data_type)
+    main(args.model_name, args.file_ext, args.map_name, args.data_type)
