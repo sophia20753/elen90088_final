@@ -26,10 +26,7 @@ import tensorflow as tf
 from tensorflow.keras.models import load_model
 from project_functions import save_data_to_csv
 
-def get_first_word(filename):
-    return filename.split('_')[0]
-
-def process_input(env, reward, mean, scale, model_name):
+def process_input(env, reward, mean, scale, model_version):
     lane_position = env.get_lane_pos2(env.cur_pos, env.cur_angle)
     distance_to_road_center = lane_position.dist
     angle_from_straight_in_rads = lane_position.angle_rad
@@ -38,7 +35,7 @@ def process_input(env, reward, mean, scale, model_name):
     distance_to_road_center = (distance_to_road_center-mean[1])/scale[1]
     angle_from_straight_in_rads = (angle_from_straight_in_rads-mean[2])/scale[2]
 
-    if get_first_word(model_name) == 'unweighted':
+    if model_version == 'unweighted':
         # input data for unweighted svr
         input_data = np.array([[distance_to_road_center, angle_from_straight_in_rads, reward]])
     else:
@@ -47,21 +44,31 @@ def process_input(env, reward, mean, scale, model_name):
 
     return input_data
 
-def main(model_name, file_ext = '.h5', map_name='udem1', data_type='pd'):
+def main(model_name):
+    # parse model_name
+    string = model_name.split('_')
+    model_version = string[0] # base/reg/best or unweighted/weighted
+    model_type = string[1] # svr/dnn
+    data_type = string[3] # raw/processed
+    controller = string[4] # pd/mpc
+
+    map_name = 'udem1' # test map
+
     # create environment with training map
     env = DuckietownEnv(map_name=map_name, domain_rand=False, draw_bbox=False, user_tile_start=(1, 1))
     env.render()
     env.max_steps = 5000 # increase max step count to ensure robot finishes traversing map
 
-    # load model for .h5
-    if file_ext == '.h5':
+    # load model for dnn
+    if model_type == 'dnn':
         model = load_model(f"models/{model_name}.h5")
+    # load model for svr
     else:
         with open(f'models/{model_name}.pkl', 'rb') as f:
             model = pickle.load(f)
 
     # load scaling parameters
-    with open(f'train_data/{data_type}_scaling_params.pkl', 'rb') as file:
+    with open(f'train_data/{data_type}_data_{controller}_scaling_params.pkl', 'rb') as file:
         scaling_params = pickle.load(file)
     mean = scaling_params['mean']
     scale = scaling_params['scale']
@@ -96,7 +103,7 @@ def main(model_name, file_ext = '.h5', map_name='udem1', data_type='pd'):
         # update total reward
         total_reward += reward
 
-        input_data = process_input(env, reward, mean, scale, model_name)
+        input_data = process_input(env, reward, mean, scale, model_version)
 
         # make prediction
         steering_angle = model.predict(input_data)
@@ -143,9 +150,6 @@ def main(model_name, file_ext = '.h5', map_name='udem1', data_type='pd'):
 if __name__  == '__main__':
     parser = argparse.ArgumentParser(description='Run Duckietown simulation and collect data')
     parser.add_argument('--model_name', type=str, help='Name of model file')
-    parser.add_argument('--file_ext', type=str, help='File extension of model file')
-    parser.add_argument('--map_name', type=str, help='Name of map to simulate in')
-    parser.add_argument('--data_type', type=str, help='PD/MPC data for scaling parameters')
     args = parser.parse_args()
 
-    main(args.model_name, args.file_ext, args.map_name, args.data_type)
+    main(args.model_name)
