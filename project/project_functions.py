@@ -180,7 +180,7 @@ def plot_misalignment(x_model, y_model, x_gt_lap, y_gt_lap, angle_tol=10, x_tol=
     plt.plot(x_gt_lap, y_gt_lap, label='Ground Truth Trajectory')
     deviation_points = np.array(deviation_points)
     if deviation_points.size > 0:
-        plt.scatter(deviation_points[:, 0], deviation_points[:, 1], color='red', label='Deviation Points', s=5)
+        plt.scatter(deviation_points[:, 0], deviation_points[:, 1], color='red', label='Deviation Points', s=7.5)
 
     plt.xlabel('X Position')
     plt.ylabel('Y Position')
