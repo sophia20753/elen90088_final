@@ -7,12 +7,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 
+
 def save_data_to_csv(foldername, filename, data):
     '''Save data from dict to a .csv file'''
     df = pd.DataFrame(data)
     csv_file_path = os.path.join(foldername, filename)
     df.to_csv(csv_file_path, index=False)
     print(f"Saved {filename}")
+
 
 def huber_loss(ytrue, ypred, delta=1.2):
     """Calculate the Huber loss between true and predicted values"""
@@ -25,6 +27,7 @@ def huber_loss(ytrue, ypred, delta=1.2):
     # return the mean Huber loss
     return np.mean(huber_loss)
 
+
 def huber_loss_coordinates(xtrue, ytrue, xpred, ypred, delta=1.2):
     """Calculate the Huber loss between true and predicted coordinates"""
     error_x = xtrue - xpred
@@ -35,30 +38,30 @@ def huber_loss_coordinates(xtrue, ytrue, xpred, ypred, delta=1.2):
 
 # functions for svr and dnn analysis
 
-def get_first_lap(x, y, tol_x, tol_y):
+def get_lap(x, y, tol_x, tol_y):
     '''Extract data for one lap'''
-    # get start points
-    start_x = x[0]
-    start_y = y[0]
 
-    # find when x and y matches start_x and start_y
-    lap_end_index = None
+    # get end points
+    end_x = x[-1]
+    end_y = y[-1]
 
-    # start looking towards end of run
-    for i in range(4000, len(x)):
-        if (abs(x[i] - start_x) <= tol_x) and (abs(y[i] - start_y) <= tol_y):
-            lap_end_index = i
+    # find when x and y matches end_x and end_y
+    lap_start_index = None
+
+    # start looking from the end of data
+    for i in range(2000, -1, -1):
+        if (abs(x[i] - end_x) <= tol_x) and (abs(y[i] - end_y) <= tol_y):
+            lap_start_index = i
             break
 
-    # extract data
-    if lap_end_index is not None:
-        x_first_lap = x[:lap_end_index+1]
-        y_first_lap = y[:lap_end_index+1]
+    if lap_start_index is not None:
+        x_lap = x[lap_start_index:]
+        y_lap = y[lap_start_index:]
     else:
-        x_first_lap = x
-        y_first_lap = y
+        x_lap = x
+        y_lap = y
 
-    return x_first_lap, y_first_lap
+    return x_lap, y_lap
 
 
 def interpolate_trajectories(x_gt, y_gt, x_pd, y_pd, x_model, y_model):
@@ -97,7 +100,7 @@ def print_huber_losses(ytrue, ypred, x_pd, y_pd, x_gt, y_gt, x_model, y_model):
     print(f"Ground Truth and Model Huber Loss: {gt_xy_model_test_hl}")
 
 
-def plot_traj_reward(x_pd, y_pd, x_model_first_lap, y_model_first_lap, x_gt_first_lap, y_gt_first_lap, df_model, df_pd, title):
+def plot_traj_reward(x_pd_lap, y_pd_lap, x_model_lap, y_model_lap, x_gt_lap, y_gt_lap, df_model, df_pd, title):
     '''Plot trajectory and reward'''
     # create subplots
     fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(5,8))
@@ -105,10 +108,10 @@ def plot_traj_reward(x_pd, y_pd, x_model_first_lap, y_model_first_lap, x_gt_firs
     fig.suptitle(title, fontsize=14, fontweight='bold')
 
     # plot trajectories for qualitative comparison
-    ax1.scatter(x_pd[:len(x_model_first_lap):100], y_pd[:len(x_model_first_lap):100], marker='x', label='PD', color='C0')
-    ax1.plot(x_model_first_lap, y_model_first_lap, label='Model', color='C1')
-    ax1.plot(x_gt_first_lap, y_gt_first_lap, label='Ground Truth', color='C2', alpha=0.5)
-    ax1.scatter([x_model_first_lap[0]], [y_model_first_lap[0]], color='green', label='Lap Point', zorder=5)
+    ax1.scatter(x_pd_lap[::50], y_pd_lap[::50], marker='x', label='PD', color='C0', s=25)
+    ax1.plot(x_model_lap, y_model_lap, label='Model', color='C1')
+    ax1.plot(x_gt_lap, y_gt_lap, label='Ground Truth', color='C2', alpha=0.5)
+    #ax1.scatter([x_model_lap[0]], [y_model_lap[0]], color='green', label='Lap Point', zorder=5)
     ax1.legend()
     ax1.set_title("Trajectory", fontsize=12, fontstyle='italic')
 
@@ -131,13 +134,14 @@ def plot_traj_reward(x_pd, y_pd, x_model_first_lap, y_model_first_lap, x_gt_firs
     plt.show()
 
 
-def plot_misalignment(x_model, y_model, x_gt_first_lap, y_gt_first_lap, max_angle_deviation=10):
-    '''Plot misalignment'''
+def plot_misalignment(x_model, y_model, x_gt_lap, y_gt_lap, angle_tol=10, x_tol=0.7, y_tol=0.1):
+    '''Plot misalignment using angle deviation'''
+
     # interpolate ground truth to match the length of model trajectory
-    f_x = interp1d(np.linspace(0, 1, len(x_gt_first_lap)), x_gt_first_lap, kind='linear')
-    f_y = interp1d(np.linspace(0, 1, len(y_gt_first_lap)), y_gt_first_lap, kind='linear')
-    x_gt_first_lap = f_x(np.linspace(0, 1, len(x_model)))
-    y_gt_first_lap = f_y(np.linspace(0, 1, len(y_model)))
+    f_x = interp1d(np.linspace(0, 1, len(x_gt_lap)), x_gt_lap, kind='linear')
+    f_y = interp1d(np.linspace(0, 1, len(y_gt_lap)), y_gt_lap, kind='linear')
+    x_gt_lap = f_x(np.linspace(0, 1, len(x_model)))
+    y_gt_lap = f_y(np.linspace(0, 1, len(y_model)))
 
     # calculate direction vectors
     def calculate_direction_vectors(x, y):
@@ -146,7 +150,7 @@ def plot_misalignment(x_model, y_model, x_gt_first_lap, y_gt_first_lap, max_angl
         return dx, dy
 
     dx_model, dy_model = calculate_direction_vectors(x_model, y_model)
-    dx_gt, dy_gt = calculate_direction_vectors(x_gt_first_lap, y_gt_first_lap)
+    dx_gt, dy_gt = calculate_direction_vectors(x_gt_lap, y_gt_lap)
 
     # calculate angles between direction vectors
     def calculate_angles(dx1, dy1, dx2, dy2):
@@ -159,20 +163,24 @@ def plot_misalignment(x_model, y_model, x_gt_first_lap, y_gt_first_lap, max_angl
 
     angles = calculate_angles(dx_model, dy_model, dx_gt, dy_gt)
 
+    # calculate distances between corresponding points
+    distances_x = np.abs(x_model - x_gt_lap)
+    distances_y = np.abs(y_model - y_gt_lap)
+
     # initialize variables
     deviation_points = []
 
-    # find points where angle deviation exceeds threshold
+    # find points where angle or distance deviation exceeds thresholds
     for i in range(len(angles)):
-        if angles[i] > max_angle_deviation:
+        if angles[i] > angle_tol or (distances_x[i] > x_tol and distances_y[i] > y_tol):
             deviation_points.append((x_model[i+1], y_model[i+1]))  # i+1 because we used np.diff
 
     # plot trajectory diagram with deviation points marked
     plt.plot(x_model, y_model, label='Model Trajectory')
-    plt.plot(x_gt_first_lap, y_gt_first_lap, label='Ground Truth Trajectory')
+    plt.plot(x_gt_lap, y_gt_lap, label='Ground Truth Trajectory')
     deviation_points = np.array(deviation_points)
     if deviation_points.size > 0:
-        plt.scatter(deviation_points[:, 0], deviation_points[:, 1], color='red', label='Deviation Points')
+        plt.scatter(deviation_points[:, 0], deviation_points[:, 1], color='red', label='Deviation Points', s=5)
 
     plt.xlabel('X Position')
     plt.ylabel('Y Position')
