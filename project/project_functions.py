@@ -103,9 +103,10 @@ def print_huber_losses(ytrue, ypred, x_pd, y_pd, x_gt, y_gt, x_model, y_model):
 def plot_traj_reward(x_pd_lap, y_pd_lap, x_model_lap, y_model_lap, x_gt_lap, y_gt_lap, df_model, df_pd, title):
     '''Plot trajectory and reward'''
     # create subplots
-    fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(5,8))
+    #fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(5,8))
+    fig, ax1 = plt.subplots(figsize=(5,4))
 
-    fig.suptitle(title, fontsize=14, fontweight='bold')
+    #fig.suptitle(title, fontsize=14, fontweight='bold')
 
     # plot trajectories for qualitative comparison
     ax1.scatter(x_pd_lap[::50], y_pd_lap[::50], marker='x', label='PD', color='C0', s=25)
@@ -113,8 +114,8 @@ def plot_traj_reward(x_pd_lap, y_pd_lap, x_model_lap, y_model_lap, x_gt_lap, y_g
     ax1.plot(x_gt_lap, y_gt_lap, label='Ground Truth', color='C2', alpha=0.5)
     #ax1.scatter([x_model_lap[0]], [y_model_lap[0]], color='green', label='Lap Point', zorder=5)
     ax1.legend()
-    ax1.set_title("Trajectory", fontsize=12, fontstyle='italic')
-
+    #ax1.set_title("Trajectory", fontsize=12, fontstyle='italic')
+    '''
     # plot reward values for dnn and pd 
     reward_model = df_model["reward"].values
     reward_pd = df_pd["reward"].values
@@ -128,7 +129,7 @@ def plot_traj_reward(x_pd_lap, y_pd_lap, x_model_lap, y_model_lap, x_gt_lap, y_g
     ax2.set_xlabel("Timestep")
     ax2.set_ylabel("Reward")
     ax2.set_title("Reward", fontsize=12, fontstyle='italic')
-
+    '''
     plt.tight_layout()
 
     plt.show()

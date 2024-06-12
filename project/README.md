@@ -1,6 +1,6 @@
 # Algorithms and Models for Lane-Keep Assist Systems
 
-This project focuses on developing autonomous vehicle system capable of staying within its lanes. To do this, we compare the performance of a model-predictive control (MPC) optimisation algorithm with and without classical machine learning methods, a support vector regression model and a deep neural network trained with PD control and MPC control. 
+This project focuses on developing autonomous vehicle system capable of staying within its lanes. To do this, we compare the performance of a model-predictive control (MPC) optimisation algorithm with and without classical machine learning methods, a support vector regression model and a deep neural network trained with PD control and MPC control.
 
 ## MPC Usage
 
@@ -23,10 +23,10 @@ As a further visual aid, the '''--draw-curve''' string can be added at the end o
     ```python gen_train.py --num_simulations=<num_simulations> --map_name=<train_map_name>```
 
     Default number of simulations is `10`.
-    
-    This will save `csv` files for each simulation run in a folder named `train_data_map_name` ready for processing. 
 
-3. Process training data for training using Python notebook `data_preprocess.ipynb` in Jupyter Notebook or JupyterLab (follow instructions in notebook). 
+    This will save `csv` files for each simulation run in a folder named `train_data_map_name` ready for processing.
+
+3. Process training data for training using Python notebook `data_preprocess.ipynb` in Jupyter Notebook or JupyterLab (follow instructions in notebook).
 
 4. Train DNN model using Python notebook `dnn.ipynb` in Jupyter Notebook or JupyterLab (follow instructions in notebook).
 
@@ -52,5 +52,5 @@ As a further visual aid, the '''--draw-curve''' string can be added at the end o
 - `test_pd_tour.py`: Script to generate PD control testing data.
 - `test_dnn_tour.py`: Script to generate DNN model testing data.
 - `data_preprocess.ipynb`: Notebook to process training data for model training.
-- `dnn.ipynb`: Notebook to train DNN model. 
+- `dnn.ipynb`: Notebook to train DNN model.
 - `dnn_analysis`: Notebook to analyse DNN model performance.
