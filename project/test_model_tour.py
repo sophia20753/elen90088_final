@@ -1,14 +1,38 @@
+'''
+Script Name: test_model_tour.py
+
+Description:
+    This script runs a simulation in the Duckietown environment using a pre-trained model (either DNN or SVR) and collects data during the simulation. The script uses the model to predict steering angles, and saves the collected data to csv files for further analysis and evaluation.
+
+Usage Instructions:
+    To run this script, use the following command:
+        python test_model_tour.py --model_name <model_name>
+    Example:
+        python test_model_tour.py --model_name base_dnn_raw_pd
+
+Parameters:
+    --model_name: Name of the model file to use for predictions (str). The name should follow the format:
+        <version>_<type>_<unused>_<data>_<controller>. Example: base_dnn_model_raw_pd.
+
+Original Code Reference:
+    This script was adapted from code provided by Professor Tansu Alpcan for ELEN90088.
+
+Author:
+    Sophia Chiang
+    June 12th 2024
+'''
+# Add path to models
 import sys
 import os
 
-# get the current directory of the script
+# Get the current directory of the script
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
-# add the 'src' directory to the Python path
+# Add the 'src' directory to the Python path
 src_dir = os.path.join(script_dir, '..', 'src')
 sys.path.append(src_dir)
 
-# import relevant libraries
+# Import relevant libraries
 import pickle
 from pickle import FALSE, TRUE
 from PIL import Image
@@ -19,8 +43,6 @@ import pandas as pd
 import pyglet
 from pyglet.window import key
 from gym_duckietown.envs import DuckietownEnv
-import csv
-import random
 import argparse
 import tensorflow as tf
 from tensorflow.keras.models import load_model
@@ -95,6 +117,7 @@ def main(model_name):
 
     total_reward = 0
 
+    # Adapted from Professor Alpcan's example code
     while True:
         lane_position = env.get_lane_pos2(env.cur_pos, env.cur_angle)
         distance_to_road_center = lane_position.dist
