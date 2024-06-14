@@ -36,7 +36,6 @@ sys.path.append(src_dir)
 import pickle
 from pickle import FALSE, TRUE
 from PIL import Image
-import time
 import gym
 import numpy as np
 import pandas as pd
@@ -49,57 +48,58 @@ from tensorflow.keras.models import load_model
 from project_functions import save_data_to_csv
 
 def process_input(env, reward, mean, scale, model_version):
+    '''Function to prepare input data for model prediction'''
     lane_position = env.get_lane_pos2(env.cur_pos, env.cur_angle)
     distance_to_road_center = lane_position.dist
     angle_from_straight_in_rads = lane_position.angle_rad
 
-    # normalise observation data 
+    # Normalise observation data 
     distance_to_road_center = (distance_to_road_center-mean[1])/scale[1]
     angle_from_straight_in_rads = (angle_from_straight_in_rads-mean[2])/scale[2]
 
     if model_version == 'unweighted':
-        # input data for unweighted svr
+        # Input data for unweighted svr
         input_data = np.array([[distance_to_road_center, angle_from_straight_in_rads, reward]])
     else:
-        # input data for dnn & weighted svr
+        # Input data for dnn & weighted svr
         input_data = np.array([[distance_to_road_center, angle_from_straight_in_rads]])
 
     return input_data
 
 def main(model_name):
-    # parse model_name
+    # Parse model_name
     string = model_name.split('_')
     model_version = string[0] # base/reg/best or unweighted/weighted
     model_type = string[1] # svr/dnn
     data_type = string[3] # raw/processed
     controller = string[4] # pd/mpc
 
-    map_name = 'udem1' # test map
+    map_name = 'udem1' # Test map
 
-    # create environment with training map
+    # Create environment with testing map
     env = DuckietownEnv(map_name=map_name, domain_rand=False, draw_bbox=False, user_tile_start=(1, 1))
     env.render()
-    env.max_steps = 5000 # increase max step count to ensure robot finishes traversing map
+    env.max_steps = 5000 # Increase max step count to ensure robot finishes traversing map
 
-    # load model for dnn
     if model_type == 'dnn':
+        # Load model for dnn
         model = load_model(f"models/{model_name}.h5")
-    # load model for svr
     else:
+        # Load model for svr
         with open(f'models/{model_name}.pkl', 'rb') as f:
             model = pickle.load(f)
 
-    # load scaling parameters
+    # Load scaling parameters
     with open(f'train_data/{data_type}_data_{controller}_scaling_params.pkl', 'rb') as file:
         scaling_params = pickle.load(file)
     mean = scaling_params['mean']
     scale = scaling_params['scale']
 
-    # create folder for test data
+    # Create folder for test data
     if not os.path.exists("test_data"):
         os.makedirs("test_data")
     
-    # initialise test data for analysis
+    # Initialise test data dict
     test_model_data = {
         "cur_pos_x": [],
         "cur_pos_z": [],
@@ -109,13 +109,11 @@ def main(model_name):
         "reward": [],
     }
 
-    # make initial step with default speed and angle
+    # Make initial step with default speed and angle
     car_speed = 0.1
     steering_angle = 0
 
     _, reward, done, _ = env.step([car_speed, steering_angle])
-
-    total_reward = 0
 
     # Adapted from Professor Alpcan's example code
     while True:
@@ -123,23 +121,20 @@ def main(model_name):
         distance_to_road_center = lane_position.dist
         angle_from_straight_in_rads = lane_position.angle_rad
 
-        # update total reward
-        total_reward += reward
-
         input_data = process_input(env, reward, mean, scale, model_version)
 
-        # make prediction
+        # Make prediction
         steering_angle = model.predict(input_data)
 
-        # reverse normalisation
+        # Reverse normalisation
         steering_angle = steering_angle*scale[0] + mean[0]
 
         _, reward, done, _ = env.step([car_speed, steering_angle])
 
-        # update display
+        # Update display
         env.render()
 
-        # store timestep data
+        # Store timestep data
         test_model_data["cur_pos_x"].append(env.cur_pos[0])
         test_model_data["cur_pos_z"].append(env.cur_pos[2])
         test_model_data["distance_to_road_center"].append(distance_to_road_center)
@@ -151,8 +146,7 @@ def main(model_name):
             if reward < 0:
                 print(f"Test crashed, run again")
                 env.reset()
-                # reset data collection 
-                # initialise test data for analysis
+                # Reset data collection 
                 test_model_data = {
                     "cur_pos_x": [],
                     "cur_pos_z": [],
@@ -163,7 +157,7 @@ def main(model_name):
                 }
                 continue
             else:
-                # successful run so save data to csv
+                # Successful run so save data to csv
                 print(f"Test reached goal")
                 save_data_to_csv("test_data", f"test_{model_name}_data.csv", test_model_data)
                 break
